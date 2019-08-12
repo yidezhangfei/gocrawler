@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/gocolly/colly"
 	"github.com/yidezhangfei/gocrawler/mongodb"
+	"github.com/yidezhangfei/gocrawler/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"log"
 	"os"
@@ -33,7 +34,7 @@ func GetArticleCallback(e *colly.HTMLElement) {
 	title := e.ChildText("h1")
 	text := e.ChildText("div[class='texttit_m1']")
 	var item = article{title: title, content: text}
-	fmt.Printf("item: %v", item)
+	//fmt.Printf("item: %v", item)
 	//saveToFile("toutiao.txt", item)
 	saveToDB(item)
 }
@@ -58,9 +59,11 @@ func saveToDB(item article) {
 		mongodb.MongoInit()
 	}
 	document := itemToDocument(item)
-	_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
-	if err != nil {
-		log.Fatalf("insert err: %v \n", err)
+	if document != nil {
+		_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
+		if err != nil {
+			log.Fatalf("insert err: %v \n", err)
+		}
 	}
 }
 
@@ -68,6 +71,11 @@ func itemToDocument(item article) bson.M {
 	now := time.Now()
 	year, month, day := now.Date()
 	var currentDate = fmt.Sprintf("%d-%d-%d", year, month, day)
-	document := bson.M{"date": currentDate, "title": item.title, "content": item.content}
+	md5string := util.Md5String(item.title)
+	if md5string == "" {
+		log.Fatal("md5 is null")
+		return nil
+	}
+	document := bson.M{"date": currentDate, "title": item.title, "content": item.content, "md5": md5string}
 	return document
 }
