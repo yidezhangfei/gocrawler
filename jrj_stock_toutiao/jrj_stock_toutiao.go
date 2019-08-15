@@ -14,6 +14,7 @@ import (
 
 var ListSelector = "div[class='mo04 mt15']>div[class='list-s1 mt15']"
 var ContentSelector = "div[class='titmain']"
+var MongoUri = "mongodb://139.199.36.63:27017"
 
 type article struct {
 	title   string
@@ -56,7 +57,7 @@ var initDB = false
 
 func saveToDB(item article) {
 	if initDB != true {
-		mongodb.MongoInit()
+		mongodb.MongoInit(MongoUri)
 	}
 	document := itemToDocument(item)
 	if document != nil {
