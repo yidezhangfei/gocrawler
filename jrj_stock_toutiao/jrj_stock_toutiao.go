@@ -14,11 +14,15 @@ import (
 
 var ListSelector = "div[class='mo04 mt15']>div[class='list-s1 mt15']"
 var ContentSelector = "div[class='titmain']"
-var MongoUri = "mongodb://139.199.36.63:27017"
+var MongoUri = "mongodb://localhost:27017"
 
 type article struct {
 	title   string
 	content string
+}
+
+func Init(mongoUri string) {
+	MongoUri = mongoUri
 }
 
 func FindListCallback(e *colly.HTMLElement) {
@@ -57,13 +61,18 @@ var initDB = false
 
 func saveToDB(item article) {
 	if initDB != true {
-		mongodb.MongoInit(MongoUri)
+		err := mongodb.MongoInit(MongoUri)
+		if err == nil {
+			initDB = true
+		}
 	}
-	document := itemToDocument(item)
-	if document != nil {
-		_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
-		if err != nil {
-			log.Fatalf("insert err: %v \n", err)
+	if initDB == true {
+		document := itemToDocument(item)
+		if document != nil {
+			_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
+			if err != nil {
+				log.Fatalf("insert err: %v \n", err)
+			}
 		}
 	}
 }

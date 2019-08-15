@@ -1,13 +1,53 @@
 package main
 
 import (
+	"encoding/xml"
+	"fmt"
 	"github.com/gocolly/colly"
 	"github.com/yidezhangfei/gocrawler/jrj_stock_toutiao"
+	"io/ioutil"
+	"log"
+	"os"
 )
 
-var gMainUrl = "http://www.jrj.com.cn"
+var gMainUrl = ""
+
+type SConfig struct {
+	XMLName  xml.Name `xml:"config"`
+	MainUrl  string   `xml:"mainUrl"`
+	MongoUri string   `xml:"mongodbUri"`
+}
+
+func initConfig() bool {
+	configFile, err := os.OpenFile("conf.xml", os.O_RDONLY, os.ModePerm)
+	if err != nil {
+		fmt.Printf("err: %v \n", err)
+		return false
+	}
+	defer configFile.Close()
+	data, err := ioutil.ReadAll(configFile)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		return false
+	}
+	config := SConfig{}
+	err = xml.Unmarshal(data, &config)
+	if err != nil {
+		fmt.Printf("err: %v\n", err)
+		return false
+	}
+	gMainUrl = config.MainUrl
+	mongoUri := config.MongoUri
+	jrj_stock_toutiao.Init(mongoUri)
+	return true
+}
 
 func main() {
+	init := initConfig()
+	if init != true {
+		log.Fatal("init config err")
+		return
+	}
 	crawler := colly.NewCollector(
 		colly.MaxDepth(2),
 		colly.Async(true))
