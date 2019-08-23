@@ -68,6 +68,7 @@ func saveToDB(item article) {
 	}
 	if initDB == true {
 		document := itemToDocument(item)
+		fmt.Printf("title: %v", item.title)
 		if document != nil {
 			_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
 			if err != nil {
