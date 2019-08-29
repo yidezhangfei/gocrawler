@@ -67,26 +67,32 @@ func saveToDB(item article) {
 		}
 	}
 	if initDB == true {
-		document := itemToDocument(item)
+		document, md5String := itemToDocument(item)
 		fmt.Printf("title: %v", item.title)
 		if document != nil {
-			_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
-			if err != nil {
-				log.Fatalf("insert err: %v \n", err)
+			filter := bson.M{"md5": md5String}
+			cursor := mongodb.Collection("stock", "jrj_stock_toutiao").FindOne(context.TODO(), filter)
+			var result = bson.M{}
+			err := cursor.Decode(&result)
+			if err == nil && result == nil {
+				_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
+				if err != nil {
+					log.Fatalf("insert err: %v \n", err)
+				}
 			}
 		}
 	}
 }
 
-func itemToDocument(item article) bson.M {
+func itemToDocument(item article) (doc bson.M, md5String string) {
 	now := time.Now()
 	year, month, day := now.Date()
 	var currentDate = fmt.Sprintf("%d-%d-%d", year, month, day)
 	md5string := util.Md5String(item.title)
 	if md5string == "" {
 		log.Fatal("md5 is null")
-		return nil
+		return nil, ""
 	}
 	document := bson.M{"date": currentDate, "title": item.title, "content": item.content, "md5": md5string}
-	return document
+	return document, md5string
 }
