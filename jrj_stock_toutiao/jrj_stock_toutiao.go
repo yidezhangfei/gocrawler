@@ -74,7 +74,7 @@ func saveToDB(item article) {
 			cursor := mongodb.Collection("stock", "jrj_stock_toutiao").FindOne(context.TODO(), filter)
 			var result = bson.M{}
 			err := cursor.Decode(&result)
-			if err == nil && result == nil {
+			if err != nil && len(result) == 0 {
 				_, err := mongodb.Collection("stock", "jrj_stock_toutiao").InsertOne(context.TODO(), document)
 				if err != nil {
 					log.Fatalf("insert err: %v \n", err)
